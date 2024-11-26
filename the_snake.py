@@ -1,6 +1,5 @@
-from random import choice, randint
 import pygame
-import os
+from random import choice, randint
 
 # Constants
 SCREEN_WIDTH, SCREEN_HEIGHT = 640, 480
@@ -30,41 +29,24 @@ clock = pygame.time.Clock()
 
 
 class GameObject:
-    """Base class for all game objects in the game."""
-
     def __init__(self, position=None, body_color=None):
-        """
-        Initialize the game object with position and color.
-
-        :param position: Tuple of x, y coordinates.
-        :param body_color: Color of the object.
-        """
         if position is None:
             position = (SCREEN_WIDTH // 2, SCREEN_HEIGHT // 2)
         self.position = position
         self.body_color = body_color
 
     def draw(self):
-        """Draw the object on the screen."""
         rect = pygame.Rect(self.position, (GRID_SIZE, GRID_SIZE))
         pygame.draw.rect(screen, self.body_color, rect)
         pygame.draw.rect(screen, BORDER_COLOR, rect, 1)
 
 
 class Apple(GameObject):
-    """Class representing an apple on the game field."""
-
     def __init__(self):
-        """Initialize an apple with a random position."""
         super().__init__(body_color=APPLE_COLOR)
         self.randomize_position()
 
     def randomize_position(self, occupied_positions=None):
-        """
-        Place the apple in a random position avoiding occupied cells.
-
-        :param occupied_positions: Set of positions to avoid.
-        """
         if occupied_positions is None:
             occupied_positions = set()
         while True:
@@ -78,19 +60,11 @@ class Apple(GameObject):
 
 
 class Poison(GameObject):
-    """Class representing poison that decreases the snake's length."""
-
     def __init__(self):
-        """Initialize poison with a random position."""
         super().__init__(body_color=POISON_COLOR)
         self.randomize_position()
 
     def randomize_position(self, occupied_positions=None):
-        """
-        Place the poison in a random position avoiding occupied cells.
-
-        :param occupied_positions: Set of positions to avoid.
-        """
         if occupied_positions is None:
             occupied_positions = set()
         while True:
@@ -104,19 +78,11 @@ class Poison(GameObject):
 
 
 class Rock(GameObject):
-    """Class representing an obstacle rock on the game field."""
-
     def __init__(self):
-        """Initialize a rock with a random position."""
         super().__init__(body_color=ROCK_COLOR)
         self.randomize_position()
 
     def randomize_position(self, occupied_positions=None):
-        """
-        Place the rock in a random position avoiding occupied cells.
-
-        :param occupied_positions: Set of positions to avoid.
-        """
         if occupied_positions is None:
             occupied_positions = set()
         while True:
@@ -130,10 +96,7 @@ class Rock(GameObject):
 
 
 class Snake(GameObject):
-    """Class representing the snake."""
-
     def __init__(self):
-        """Initialize the snake at the center of the game field."""
         super().__init__()
         self.position = (SCREEN_WIDTH // 2, SCREEN_HEIGHT // 2)
         self.length = 1
@@ -144,21 +107,20 @@ class Snake(GameObject):
         self.last = None
 
     def get_head_position(self):
-        """Get the position of the snake's head."""
         return self.positions[0]
 
     def update_direction(self):
-        """Update the direction of the snake's movement."""
         if self.next_direction:
             self.direction = self.next_direction
             self.next_direction = None
 
     def move(self):
-        """Move the snake in the current direction."""
         head_x, head_y = self.get_head_position()
         dx, dy = self.direction
-        new_head = ((head_x + dx * GRID_SIZE) % SCREEN_WIDTH,
-                    (head_y + dy * GRID_SIZE) % SCREEN_HEIGHT)
+        new_head = (
+            (head_x + dx * GRID_SIZE) % SCREEN_WIDTH,
+            (head_y + dy * GRID_SIZE) % SCREEN_HEIGHT,
+        )
 
         if len(self.positions) >= 3 and new_head in self.positions[2:]:
             self.reset()
@@ -167,14 +129,16 @@ class Snake(GameObject):
         self.positions.insert(0, new_head)
         self.positions = self.positions[:self.length]
 
+        if len(self.positions) > self.length:
+            self.last = self.positions.pop()
+
     def reset(self):
-        """Reset the snake to its initial state."""
         self.length = 1
         self.positions = [(SCREEN_WIDTH // 2, SCREEN_HEIGHT // 2)]
         self.direction = choice([UP, DOWN, LEFT, RIGHT])
+        self.last = None
 
     def draw(self):
-        """Draw the snake on the screen."""
         for position in self.positions[:-1]:
             rect = pygame.Rect(position, (GRID_SIZE, GRID_SIZE))
             pygame.draw.rect(screen, self.body_color, rect)
@@ -184,15 +148,12 @@ class Snake(GameObject):
         pygame.draw.rect(screen, self.body_color, head_rect)
         pygame.draw.rect(screen, BORDER_COLOR, head_rect, 1)
 
+        if self.last:
+            last_rect = pygame.Rect(self.last, (GRID_SIZE, GRID_SIZE))
+            pygame.draw.rect(screen, BOARD_BACKGROUND_COLOR, last_rect)
+
 
 def handle_keys(snake, fps):
-    """
-    Handle user input for controlling the snake and game speed.
-
-    :param snake: The snake object.
-    :param fps: Current frames per second.
-    :return: Updated frames per second.
-    """
     for event in pygame.event.get():
         if event.type == pygame.QUIT:
             pygame.quit()
@@ -217,7 +178,6 @@ def handle_keys(snake, fps):
 
 
 def main():
-    """Main game loop."""
     pygame.init()
     snake = Snake()
     apples = [Apple() for _ in range(3)]
